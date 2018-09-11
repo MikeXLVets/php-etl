@@ -2,12 +2,14 @@
 
 namespace Marquine\Etl\Database\Connectors;
 
-class MsSqlConnector extends Connector
+use PDO;
+
+class MSSqlConnector extends Connector
 {
     /**
     * Connect to a database.
     *
-    * @param  array  $config
+    * @param array $config
     * @return \PDO
     */
     public function connect($config)
@@ -24,7 +26,7 @@ class MsSqlConnector extends Connector
     /**
      * Get the DSN string.
      *
-     * @param  array  $config
+     * @param array $config
      * @return string
      */
     public function getDsn($config)
@@ -33,26 +35,32 @@ class MsSqlConnector extends Connector
 
         $dsn = [];
 
-        if (isset($host) && ! isset($unix_socket)) {
-            $dsn['host'] = $host;
-        }
+        if (isset($host)) {
+            $string = $host;
 
-        if (isset($port) && ! isset($unix_socket)) {
-            $dsn['port'] = $port;
+            if (isset($port)) {
+                $string .= "," . $port;
+            }
+            $dsn['Server'] = $host;
         }
 
         if (isset($database)) {
-            $dsn['dbname'] = $database;
+            $dsn['Database'] = $database;
         }
 
-        return 'dblib:' . http_build_query($dsn, '', ';');
+        if (!empty($encrypt)) {
+            $dsn['Encrypt'] = intval($encrypt);
+            $dsn['TrustServerCertificate'] = 0;
+        }
+
+        return 'sqlsrv:' . http_build_query($dsn, '', ';');
     }
 
     /**
      * Handle tasks after connection.
      *
-     * @param  \PDO  $connection
-     * @param  array  $config
+     * @param \PDO $connection
+     * @param array $config
      * @return void
      */
     public function afterConnection($connection, $config)
@@ -60,8 +68,17 @@ class MsSqlConnector extends Connector
         extract($config, EXTR_SKIP);
 
         if (isset($database)) {
-            $connection->exec("USE $database");
+            $connection->exec("use [$database]");
         }
 
+        if (isset($charset)) {
+            if (isset($collation)) {
+                $connection->prepare(" collate [$collation]")->execute();
+            }
+        }
+
+        if (isset($timezone)) {
+            $connection->prepare("set time_zone = [$timezone]")->execute();
+        }
     }
 }

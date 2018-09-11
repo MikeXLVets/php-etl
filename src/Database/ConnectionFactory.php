@@ -1,45 +1,49 @@
 <?php
 
-namespace Marquine\Etl\Database;
+namespace Marquine\Etl\Database\Connectors;
 
 use InvalidArgumentException;
+use Marquine\Etl\Database\Connection;
 
 class ConnectionFactory
 {
     /**
     * Make a new database connection.
     *
-    * @param  array  $config
-    * @return \PDO
+    * @param array $config
+    * @return \Marquine\Etl\Database\Connection
     */
-    public function make($config)
+    public static function make($config)
     {
         if (! isset($config['driver'])) {
             throw new InvalidArgumentException('A driver must be specified.');
         }
 
-        return $this->getConnector($config['driver'])->connect($config);
+        $pdo = static::selectConnector($config['driver'])
+                     ->connect($config);
+
+        return new Connection($pdo);
     }
 
     /**
-    * Get the database connector.
+    * Select the database connector.
     *
-    * @param  string  $driver
+    * @param string $driver
     * @return \Marquine\Etl\Database\Connectors\Connector
     */
-    protected function getConnector($driver)
+    public static function selectConnector($driver)
     {
         switch ($driver) {
             case 'sqlite':
-                return new Connectors\SqliteConnector;
+                return new SqliteConnector;
             case 'mysql':
-                return new Connectors\MySqlConnector;
+                return new MySqlConnector;
             case 'pgsql':
-                return new Connectors\PostgresConnector;
-            case 'mssql':
-                return new Connectors\MsSqlConnector;
+                return new PostgresConnector;
+            case 'sqlsrv':
+                return new MSSqlConnector;
         }
 
-        throw new InvalidArgumentException("Unsupported driver: $driver");
+        throw new InvalidArgumentException('The specified driver is not valid.');
     }
 }

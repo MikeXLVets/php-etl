@@ -1,12 +1,12 @@
 {
-    "name": "marquine/php-etl",
-    "description": "Extract, Transform and Load data using PHP.",
+    "name": "xlvets/php-etl",
+    "description": "Extract, Transform and Load data using PHP. Fork of https://github.com/leomarquine/php-etl",
     "keywords": ["etl", "extract", "transform", "load", "extraction", "transformation", "seed", "data", "laravel"],
     "license": "MIT",
     "authors": [
         {
-            "name": "Leonardo Marquine",
-            "email": "leonardomarquine@gmail.com"
+            "name": "Mike Welsh",
+            "email": "mike.welsh@xlvets.com"
         }
     ],
     "require": {

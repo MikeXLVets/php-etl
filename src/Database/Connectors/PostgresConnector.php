@@ -2,12 +2,14 @@
 
 namespace Marquine\Etl\Database\Connectors;
 
+use PDO;
+
 class PostgresConnector extends Connector
 {
     /**
     * Connect to a database.
     *
-    * @param  array  $config
+    * @param array $config
     * @return \PDO
     */
     public function connect($config)
@@ -24,7 +26,7 @@ class PostgresConnector extends Connector
     /**
      * Get the DSN string.
      *
-     * @param  array  $config
+     * @param array $config
      * @return string
      */
     public function getDsn($config)
@@ -51,8 +53,8 @@ class PostgresConnector extends Connector
     /**
      * Handle tasks after connection.
      *
-     * @param  \PDO  $connection
-     * @param  array  $config
+     * @param \PDO $connection
+     * @param array $config
      * @return void
      */
     public function afterConnection($connection, $config)
@@ -81,7 +83,7 @@ class PostgresConnector extends Connector
     /**
      * Format the schema.
      *
-     * @param  array|string  $schema
+     * @param array|string $schema
      * @return string
      */
     public function formatSchema($schema)

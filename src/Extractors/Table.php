@@ -2,7 +2,7 @@
 
 namespace Marquine\Etl\Extractors;
 
-use Marquine\Etl\Database\Manager;
+use Marquine\Etl\Etl;
 
 class Table implements ExtractorInterface
 {
@@ -28,59 +28,19 @@ class Table implements ExtractorInterface
     public $where = [];
 
     /**
-     * The database table.
+     * Extract data from the given source.
      *
-     * @var string
+     * @param string $table
+     * @return array
      */
-    protected $table;
-
-    /**
-     * The database manager.
-     *
-     * @var \Marquine\Etl\Database\Manager
-     */
-    protected $db;
-
-    /**
-     * Create a new Table Extractor instance.
-     *
-     * @param \Marquine\Etl\Database\Manager $manager
-     */
-    public function __construct(Manager $manager)
+    public function extract($table)
     {
-        $this->db = $manager;
-    }
-
-    /**
-     * Set the extractor source.
-     *
-     * @param  mixed  $source
-     * @return void
-     */
-    public function source($source)
-    {
-        $this->table = $source;
-    }
-
-    /**
-     * Get the extractor iterator.
-     *
-     * @return \Generator
-     */
-    public function getIterator()
-    {
-        if (empty($this->columns)) {
-            $this->columns = ['*'];
+        if (is_string($this->columns)) {
+            $this->columns = [$this->columns];
         }
 
-        $statement = $this->db
-            ->query($this->connection)
-            ->select($this->table, $this->columns)
-            ->where($this->where)
-            ->execute();
-
-        while ($row = $statement->fetch()) {
-            yield $row;
-        }
+        return Etl::database($this->connection)->select(
+            $table, $this->columns, $this->where
+        );
     }
 }

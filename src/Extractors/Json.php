@@ -3,9 +3,12 @@
 namespace Marquine\Etl\Extractors;
 
 use Flow\JSONPath\JSONPath;
+use Marquine\Etl\Traits\ValidateSource;
 
 class Json implements ExtractorInterface
 {
+    use ValidateSource;
+
     /**
      * Extractor columns.
      *
@@ -14,31 +17,16 @@ class Json implements ExtractorInterface
     public $columns;
 
     /**
-     * Path to the file.
+     * Extract data from the given source.
      *
-     * @var string
+     * @param string $source
+     * @return array
      */
-    protected $file;
-
-    /**
-     * Set the extractor source.
-     *
-     * @param  mixed  $source
-     * @return void
-     */
-    public function source($source)
+    public function extract($source)
     {
-        $this->file = $source;
-    }
+        $source = $this->validateSource($source);
 
-    /**
-     * Get the extractor iterator.
-     *
-     * @return \Generator
-     */
-    public function getIterator()
-    {
-        $items = json_decode(file_get_contents($this->file), true);
+        $items = json_decode(file_get_contents($source), true);
 
         if ($this->columns) {
             $jsonPath = new JSONPath($items);
@@ -50,17 +38,13 @@ class Json implements ExtractorInterface
             $items = $this->transpose($this->columns);
         }
 
-        $data = new Arr;
-
-        $data->source($items);
-
-        return $data;
+        return $items;
     }
 
     /**
-     * Swap columns and rows.
+     * Switch columns and rows.
      *
-     * @param  array  $columns
+     * @param array $columns
      * @return array
      */
     protected function transpose($columns)

@@ -2,16 +2,14 @@
 
 namespace Marquine\Etl\Loaders;
 
-use Marquine\Etl\Pipeline;
-
 interface LoaderInterface
 {
     /**
-     * Get the loader handler.
+     * Load data to the given destination.
      *
-     * @param  \Marquine\Etl\Pipeline  $pipeline
-     * @param  string  $destination
-     * @return callable
+     * @param string $destination
+     * @param array $items
+     * @return void
      */
-    public function handler(Pipeline $pipeline, $destination);
+    public function load($destination, $items);
 }

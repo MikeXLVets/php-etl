@@ -2,8 +2,6 @@
 
 namespace Marquine\Etl\Transformers;
 
-use Marquine\Etl\Pipeline;
-
 class JsonEncode implements TransformerInterface
 {
     /**
@@ -11,7 +9,7 @@ class JsonEncode implements TransformerInterface
      *
      * @var array
      */
-    public $columns;
+     public $columns;
 
     /**
      * Options.
@@ -28,14 +26,14 @@ class JsonEncode implements TransformerInterface
     public $depth = 512;
 
     /**
-     * Get the transformer handler.
+     * Execute a transformation.
      *
-     * @param  \Marquine\Etl\Pipeline  $pipeline
-     * @return callable
+     * @param array $items
+     * @return array
      */
-    public function handler(Pipeline $pipeline)
+    public function transform($items)
     {
-        return function ($row) {
+        return array_map(function($row) {
             if ($this->columns) {
                 foreach ($this->columns as $column) {
                     $row[$column] = json_encode($row[$column], $this->options, $this->depth);
@@ -47,6 +45,6 @@ class JsonEncode implements TransformerInterface
             }
 
             return $row;
-        };
+        }, $items);
     }
 }

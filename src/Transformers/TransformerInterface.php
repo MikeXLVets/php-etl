@@ -2,15 +2,13 @@
 
 namespace Marquine\Etl\Transformers;
 
-use Marquine\Etl\Pipeline;
-
 interface TransformerInterface
 {
     /**
-     * Get the transformer handler.
+     * Execute a transformation.
      *
-     * @param  \Marquine\Etl\Pipeline  $pipeline
-     * @return callable
+     * @param array $items
+     * @return array
      */
-    public function handler(Pipeline $pipeline);
+    public function transform($items);
 }

@@ -2,8 +2,12 @@
 
 namespace Marquine\Etl\Extractors;
 
+use Marquine\Etl\Traits\ValidateSource;
+
 class Csv implements ExtractorInterface
 {
+    use ValidateSource;
+
     /**
      * Extractor columns.
      *
@@ -16,66 +20,57 @@ class Csv implements ExtractorInterface
      *
      * @var string
      */
-    public $delimiter = ',';
+    public $delimiter = ';';
 
     /**
      * The enclosure string.
      *
      * @var string
      */
-    public $enclosure = '';
+    public $enclosure = '"';
 
     /**
-     * Path to the file.
+     * Extract data from the given source.
      *
-     * @var string
-     */
-    protected $file;
-
-    /**
-     * Set the extractor source.
-     *
-     * @param  mixed  $source
-     * @return void
-     */
-    public function source($source)
-    {
-        $this->file = $source;
-    }
-
-    /**
-     * Get the extractor iterator.
-     *
-     * @return \Generator
-     */
-    public function getIterator()
-    {
-        $handle = fopen($this->file, 'r');
-
-        while ($row = fgets($handle)) {
-            if (!$this->columns) {
-                $this->columns = $this->makeColumns($row);
-            } else {
-                yield $this->makeRow($row);
-            }
-        }
-
-        fclose($handle);
-    }
-
-    /**
-     * Converts the row string to array.
-     *
-     * @param  string  $row
+     * @param string $source
      * @return array
      */
-    protected function makeRow($row)
+    public function extract($source)
+    {
+        $source = $this->validateSource($source);
+
+        $items = [];
+
+        $handle = fopen($source, 'r');
+        if ($handle) {
+            while ($row = fgets($handle)) {
+                if (! $this->columns) {
+                    $this->columns = $this->makeColumns($row);
+                } else {
+                    $items[] = $this->processRow($row, $this->columns);
+                }
+            }
+            fclose($handle);
+        }
+
+        return $items;
+    }
+
+
+    /**
+     * Converts the row string into array.
+     *
+     * @param string $row
+     * @param array $columns
+     * @return array
+     */
+    protected function processRow($row, $columns)
     {
         $row = str_getcsv($row, $this->delimiter, $this->enclosure);
 
         $data = [];
 
-        foreach ($this->columns as $column => $index) {
+        foreach ($columns as $column => $index) {
             $data[$column] = $row[$index - 1];
         }
 
@@ -85,7 +80,7 @@ class Csv implements ExtractorInterface
     /**
      * Make columns based on csv header.
      *
-     * @param  string  $header
+     * @param string $header
      * @return array
      */
     protected function makeColumns($header)

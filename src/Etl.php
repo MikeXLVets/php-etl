@@ -2,164 +2,64 @@
 
 namespace Marquine\Etl;
 
-use ReflectionClass;
+use Marquine\Etl\Database\Connectors\ConnectionFactory;
 
 class Etl
 {
     /**
-     * The etl container.
+     * Global configuration array.
      *
-     * @var \Marquine\Etl\Container
+     * @var array
      */
-    protected $container;
+    protected static $config;
 
     /**
-     * The etl pipeline.
+     * Global database connections.
      *
-     * @var \Marquine\Etl\Pipeline
-     */
-    protected $pipeline;
+     * @var array
+    */
+    protected static $connections = [];
 
     /**
-     * Create a new Etl instance.
+     * Set the global configuration or get a config item.
      *
-     * @param  Container  $container
-     * @param  Pipeline  $pipeline
-     * @return void
-     */
-    public function __construct(Container $container = null, Pipeline $pipeline = null)
-    {
-        $this->container = $container ?? Container::getInstance();
-        $this->pipeline = $pipeline ?? new Pipeline;
-
-        $this->registerBindings();
-    }
-
-    /**
-     * Register bindings.
-     *
-     * @return void
-     */
-    protected function registerBindings()
-    {
-        if (empty($this->container->getBindings())) {
-            require __DIR__ . '/bindings.php';
-        }
-    }
-
-    /**
-     * Extract.
-     *
-     * @param  string  $extractor
-     * @param  string  $source
-     * @param  array  $options
-     * @return $this
-     */
-    public function extract($extractor, $source, $options = [])
-    {
-        $extractor = $this->make('extractor', $extractor, $options);
-
-        $extractor->source($source);
-
-        $this->pipeline->flow($extractor);
-
-        return $this;
-    }
-
-    /**
-     * Transform.
-     *
-     * @param  string  $transformer
-     * @param  array  $options
-     * @return $this
-     */
-    public function transform($transformer, $options = [])
-    {
-        $transformer = $this->make('transformer', $transformer, $options);
-
-        $this->pipeline->pipe($transformer->handler($this->pipeline));
-
-        return $this;
-    }
-
-    /**
-     * Load.
-     *
-     * @param  string  $loader
-     * @param  string  $destination
-     * @param  array  $options
-     * @return $this
-     */
-    public function load($loader, $destination, $options = [])
-    {
-        $loader = $this->make('loader', $loader, $options);
-
-        $this->pipeline->pipe($loader->handler($this->pipeline, $destination));
-
-        return $this;
-    }
-
-    /**
-     * Execute the ETL.
-     *
-     * @return void
-     */
-    public function run()
-    {
-        $generator = $this->pipeline->get();
-
-        while($generator->valid()) {
-            $generator->next();
-        }
-    }
-
-    /**
-     * Get an array of the resulting ETL data.
-     *
-     * @return array
-     */
-    public function toArray()
-    {
-        return iterator_to_array($this->pipeline->get());
-    }
-
-    /**
-     * Make a new step instance.
-     *
-     * @param  string  $type
-     * @param  string  $step
-     * @param  array  $options
-     * @return object
-     */
-    protected function make($type, $step, $options)
-    {
-        $step = $this->container->make("$type.$step");
-
-        if (!empty($options)) {
-            $reflector = new ReflectionClass($step);
-
-            foreach ($options as $property => $value) {
-                $property = lcfirst(implode('', array_map('ucfirst', explode('_', $property))));
-
-                if ($reflector->hasProperty($property) && $reflector->getProperty($property)->isPublic()) {
-                    $step->$property = $value;
-                }
-            }
-        }
-
-        return $step;
-    }
-
-    /**
-     * Handle dynamic method calls.
-     *
-     * @param  string  $method
-     * @param  array  $parameters
+     * @param mixed $config
+     * @param mixed $default
      * @return mixed
-     *
      */
-    public function __call($method, $parameters)
+    public static function config($config, $default = null)
     {
-        return $this->pipeline->$method(...$parameters);
+        if (is_string($config)) {
+            $value = static::$config;
+
+            foreach (explode('.', $config) as $segment) {
+                $value = isset($value[$segment]) ? $value[$segment] : null;
+            }
+
+            return $value ?: $default;
+        }
+
+        static::$config = $config;
+    }
+
+    /**
+    * Get a database connection.
+    *
+    * @param string $connection
+    * @return \Marquine\Etl\Database\Connection
+    */
+    public static function database($connection = 'default')
+    {
+        if ($connection == 'default') {
+            $connection = static::config('database.default');
+        }
+
+        if (! isset(static::$connections[$connection])) {
+            static::$connections[$connection] = ConnectionFactory::make(
+                static::config("database.connections.$connection")
+            );
+        }
+
+        return static::$connections[$connection];
     }
 }

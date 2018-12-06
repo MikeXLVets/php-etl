@@ -2,8 +2,12 @@
 
 namespace Marquine\Etl\Extractors;
 
+use Marquine\Etl\Traits\ValidateSource;
+
 class FixedWidth implements ExtractorInterface
 {
+    use ValidateSource;
+
     /**
      * Extractor columns.
      *
@@ -12,50 +16,40 @@ class FixedWidth implements ExtractorInterface
     public $columns;
 
     /**
-     * Path to the file.
+     * Extract data from the given source.
      *
-     * @var string
+     * @param string $source
+     * @return array
      */
-    protected $file;
-
-    /**
-     * Set the extractor source.
-     *
-     * @param  mixed  $source
-     * @return void
-     */
-    public function source($source)
+    public function extract($source)
     {
-        $this->file = $source;
-    }
+        $source = $this->validateSource($source);
 
-    /**
-     * Get the extractor iterator.
-     *
-     * @return \Generator
-     */
-    public function getIterator()
-    {
-        $handle = fopen($this->file, 'r');
+        $items = [];
 
-        while ($row = fgets($handle)) {
-            yield $this->makeRow($row);
+        $handle = fopen($source, 'r');
+        if ($handle) {
+            while ($row = fgets($handle)) {
+                $items[] = $this->processRow($row, $this->columns);
+            }
+            fclose($handle);
         }
 
-        fclose($handle);
+        return $items;
     }
 
     /**
      * Converts a row string into array.
      *
-     * @param  string  $row
+     * @param string $row
+     * @param array $columns
      * @return array
      */
-    public function makeRow($row)
+    public function processRow($row, $columns)
     {
         $result = [];
 
-        foreach ($this->columns as $column => $range) {
+        foreach ($columns as $column => $range) {
             $result[$column] = substr($row, $range[0], $range[1]);
         }
 

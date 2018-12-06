@@ -2,9 +2,6 @@
 
 namespace Marquine\Etl\Transformers;
 
-use Marquine\Etl\Pipeline;
-use InvalidArgumentException;
-
 class Trim implements TransformerInterface
 {
     /**
@@ -29,54 +26,58 @@ class Trim implements TransformerInterface
     public $mask = " \t\n\r\0\x0B";
 
     /**
-     * Get the transformer handler.
+     * Execute a transformation.
      *
-     * @param  \Marquine\Etl\Pipeline  $pipeline
-     * @return callable
+     * @param array $items
+     * @return array
      */
-    public function handler(Pipeline $pipeline)
+    public function transform($items)
     {
-        $type = $this->getTrimFunction();
+        $this->normalizeType();
 
-        return function ($row) use ($type) {
+        return array_map(function($row) {
             if ($this->columns) {
                 foreach ($this->columns as $column) {
-                    $row[$column] = call_user_func($type, $row[$column], $this->mask);
+                    $row[$column] = call_user_func($this->type, $row[$column], $this->mask);
                 }
             } else {
                 foreach ($row as $column => $value) {
-                    $row[$column] = call_user_func($type, $value, $this->mask);
+                    $row[$column] = call_user_func($this->type, $value, $this->mask);
                 }
             }
 
             return $row;
-        };
+        }, $items);
     }
 
     /**
-     * Get the trim function name.
+     * Normalize the trim function name.
      *
-     * @return string
+     * @return void
      */
-    protected function getTrimFunction()
+    protected function normalizeType()
     {
         switch ($this->type) {
             case 'ltrim':
             case 'start':
             case 'left':
-                return 'ltrim';
+                $this->type = 'ltrim';
+                break;
 
             case 'rtrim':
             case 'end':
             case 'right':
-                return 'rtrim';
+                $this->type = 'rtrim';
+                break;
 
             case 'trim':
             case 'all':
             case 'both':
-                return 'trim';
-        }
+                $this->type = 'trim';
+                break;
 
-        throw new InvalidArgumentException('The provided trim type is not supported.');
+            default:
+                $this->type = 'trim';
+        }
     }
 }

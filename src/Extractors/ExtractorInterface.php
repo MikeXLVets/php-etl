@@ -2,15 +2,13 @@
 
 namespace Marquine\Etl\Extractors;
 
-use IteratorAggregate;
-
-interface ExtractorInterface extends IteratorAggregate
+interface ExtractorInterface
 {
     /**
-     * Set the extractor source.
+     * Extract data from the given source.
      *
-     * @param  mixed  $source
-     * @return void
+     * @param string $source
+     * @return array
      */
-    public function source($source);
-};
+    public function extract($source);
+}

@@ -2,12 +2,14 @@
 
 namespace Marquine\Etl\Database\Connectors;
 
+use PDO;
+
 class MySqlConnector extends Connector
 {
     /**
     * Connect to a database.
     *
-    * @param  array  $config
+    * @param array $config
     * @return \PDO
     */
     public function connect($config)
@@ -24,7 +26,7 @@ class MySqlConnector extends Connector
     /**
      * Get the DSN string.
      *
-     * @param  array  $config
+     * @param array $config
      * @return string
      */
     public function getDsn($config)
@@ -33,15 +35,15 @@ class MySqlConnector extends Connector
 
         $dsn = [];
 
-        if (isset($unix_socket)) {
+        if (!empty($unix_socket)) {
             $dsn['unix_socket'] = $unix_socket;
         }
 
-        if (isset($host) && ! isset($unix_socket)) {
+        if (isset($host) && empty($unix_socket)) {
             $dsn['host'] = $host;
         }
 
-        if (isset($port) && ! isset($unix_socket)) {
+        if (isset($port) && empty($unix_socket)) {
             $dsn['port'] = $port;
         }
 
@@ -55,8 +57,8 @@ class MySqlConnector extends Connector
     /**
      * Handle tasks after connection.
      *
-     * @param  \PDO  $connection
-     * @param  array  $config
+     * @param \PDO $connection
+     * @param array $config
      * @return void
      */
     public function afterConnection($connection, $config)
@@ -80,5 +82,6 @@ class MySqlConnector extends Connector
         if (isset($timezone)) {
             $connection->prepare("set time_zone = '$timezone'")->execute();
         }
+
     }
 }

@@ -41,7 +41,7 @@ abstract class Connector
         $username = isset($config['username']) ? $config['username'] : null;
 
         $password = isset($config['password']) ? $config['password'] : null;
-        
+
         return new PDO($dsn, $username, $password, $this->options);
     }
 

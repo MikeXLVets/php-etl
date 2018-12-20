@@ -36,6 +36,7 @@ class Table implements LoaderInterface
      * @var bool
      */
     public $update = true;
+    public $updated = false;
 
     /**
      * Indicates if the loader will delete/softdelete data.
@@ -114,17 +115,17 @@ class Table implements LoaderInterface
 
         if (! $this->skipDataCheck) {
             $select = Etl::database($this->connection)->select($this->table);
-
+            
             $old = $this->index($select, $this->keys);
 
             $items = $this->index($items, $this->keys);
         }
-
+    
         if ($this->insert === true) {
             $this->insert(array_diff_key($items, $old));
         }
 
-        if ($this->update === true) {
+        if ($this->update === true) {            
             $this->update(array_intersect_key($items, $old), array_intersect_key($old, $items));
         }
 
@@ -177,7 +178,7 @@ class Table implements LoaderInterface
      * @return void
      */
     protected function update($items, $old)
-    {
+    {        
         if (empty($items)) {
             return;
         }
@@ -204,7 +205,9 @@ class Table implements LoaderInterface
                         $item['deleted_at'] = null;
                     }
                     
-                    $statement->execute($item);
+                    if ($statement->execute($item)) {
+                        $this->updated = true;
+                    }
                 }
             }
         };
@@ -286,8 +289,15 @@ class Table implements LoaderInterface
             return true;
         }
 
-        unset($old['created_at'], $old['updated_at']);
-
+        unset(
+            $old['sync_date'],
+            $old['sync_data']
+        );
+        var_dump(array_diff($new, $old));
+        var_dump('db');
+        var_dump($old);
+        var_dump('api');
+        var_dump($new);
         return ! empty(array_diff($new, $old));
     }
 

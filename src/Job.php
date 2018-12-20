@@ -10,6 +10,8 @@ class Job
      * @var array
      */
     protected $items;
+    
+    public $updated = false;
 
     /**
     * Create a new Job instance.
@@ -93,6 +95,7 @@ class Job
         $loader = $this->factory($type, 'loaders', $options);
 
         $loader->load($destination, $this->items);
+        $this->updated = $loader->updated;        
 
         return $this;
     }
